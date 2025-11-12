@@ -13,6 +13,7 @@ import java.util.Locale;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
+//import org.apache.jena.vocabulary.RDFS;
 
 @AutoService(Exporter.class)
 public class DCATAPExporter implements Exporter {
@@ -138,7 +139,8 @@ public class DCATAPExporter implements Exporter {
                         //.addProperty(model.createProperty("dcat:downloadURL"), downloadUrl);
                 
                 // link the distribution to the dataset
-                datasetModel.addProperty(model.createProperty("dcat:distribution"), distribution);
+                datasetModel.addProperty(model.createProperty("dcat:distribution"), model.createResource("dcat:distribution/" + i)
+                        .addProperty(model.createProperty("dcterms:title"), fileName));
             }
             
             model.write(outputStream, "JSON-LD");
