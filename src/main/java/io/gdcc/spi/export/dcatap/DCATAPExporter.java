@@ -13,6 +13,9 @@ import java.util.Locale;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+// Maybe use vocabs, but for now just use strings which I like more
 //import org.apache.jena.vocabulary.RDFS;
 
 @AutoService(Exporter.class)
@@ -68,84 +71,13 @@ public class DCATAPExporter implements Exporter {
             throws ExportException {
         try {
             JsonObject datasetJson = dataProvider.getDatasetJson();
-//            JsonObject datasetORE = dataProvider.getDatasetORE();
-//            JsonObject datasetSchemaDotOrg = dataProvider.getDatasetSchemaDotOrg();
-//            JsonArray datasetFileDetails = dataProvider.getDatasetFileDetails();
-//            String dataCiteXml = dataProvider.getDataCiteXml();
-//
-//            JsonObjectBuilder job = Json.createObjectBuilder();
-//            job.add("datasetJson", datasetJson);
-//            job.add("datasetORE", datasetORE);
-//            job.add("datasetSchemaDotOrg", datasetSchemaDotOrg);
-//            job.add("datasetFileDetails", datasetFileDetails);
-//            job.add("dataCiteXml", dataCiteXml);
-//
-//            // Write the output format to the output stream.
-//            outputStream.write(job.build().toString().getBytes(StandardCharsets.UTF_8));
+            Model model = createRDFModelFromDatasetJson(datasetJson);
             
-            // get citation metadata block
-            JsonObject datasetVersion = datasetJson.getJsonObject("datasetVersion");
-
-            JsonObject citationBlock = datasetVersion.getJsonObject("metadataBlocks").getJsonObject("citation");
-            // get the fields array
-            JsonArray citationFields = citationBlock.getJsonArray("fields");
+            // TODO: how could we support these different output types using this same exporter?
+            model.write(outputStream, "JSON-LD"); // other exporters use this too
+            //model.write(outputStream, "RDF/XML"); // when for OAI harvesting, XML fits best
+            //model.write(outputStream, "TURTLE"); // human-readable text format, best for debugging
             
-            // absolute minimal is title and descriptiopn
-            String title = getPrimitiveValueFromFieldsByTypeName(citationFields, "title", "No Title");
-            String description = getPrimitiveValueFromFieldsByTypeName(citationFields, "description", "No Description");
-            
-            // that json has a complex structure :-(
-            JsonArray dsDescriptions = getValuesFromCompoundFieldByTypeName(citationFields, "dsDescription");
-            // find the first dsDescriptionValue
-            for (int i = 0; i < dsDescriptions.size(); i++) {
-                JsonObject dsDescription = dsDescriptions.getJsonObject(i);
-                JsonObject dsDescriptionValue = dsDescription.getJsonObject("dsDescriptionValue");
-                if (dsDescriptionValue != null) {
-                    description = dsDescriptionValue.getString("value", "No Description");
-                    break;
-                }
-            }
-            
-            // RDF stuff using Apache Jena
-            
-            // create an empty Model
-            Model model = ModelFactory.createDefaultModel();
-            // make the model use prefixes
-            model.setNsPrefix("dcat", "http://www.w3.org/ns/dcat#");
-            model.setNsPrefix("dcterms", "http://purl.org/dc/terms/");
-            model.setNsPrefix("rdfs", "http://www.w3.org/2000/01/rdf-schema#");
-            
-            // add the dcat ap dataset to the model
-            Resource datasetModel = model.createResource("dcat:dataset")
-                    .addProperty(model.createProperty("dcterms:title"), title)
-                    .addProperty(model.createProperty("dcterms:description"), description);
-
-            // not sure the next is needed, but...
-            datasetModel.addProperty(model.createProperty("rdfs:type"), "dcat:Dataset");
-            
-            // find any files and add them as distributions
-            JsonArray files = datasetVersion.getJsonArray("files");
-            for (int i = 0; i < files.size(); i++) {
-                JsonObject fileObj = files.getJsonObject(i);
-                JsonObject dataFile = fileObj.getJsonObject("dataFile");
-                String fileName = dataFile.getString("filename", "no-filename");
-                //String downloadUrl = dataFile.getString("downloadUrl", "no-download-url");
-                
-                // create a distribution resource
-                // each one is uniquely identified by its title here
-                // use string interpolation to make unique URIs
-                Resource distribution = model.createResource("dcat:distribution/" + i)
-                        .addProperty(model.createProperty("dcterms:title"), fileName);
-                        //.addProperty(model.createProperty("dcat:downloadURL"), downloadUrl);
-                
-                // link the distribution to the dataset
-                datasetModel.addProperty(model.createProperty("dcat:distribution"), model.createResource("dcat:distribution/" + i)
-                        .addProperty(model.createProperty("dcterms:title"), fileName));
-            }
-            
-            model.write(outputStream, "JSON-LD");
-            //model.write(outputStream, "RDF/XML");
-            //model.write(outputStream, "TURTLE");
             // Flush the output stream - The output stream is automatically closed by
             // Dataverse and should not be closed in the Exporter.
             outputStream.flush();
@@ -157,7 +89,103 @@ public class DCATAPExporter implements Exporter {
         }
     }
     
-    // json helper stuff
+    Model createRDFModelFromDatasetJson(JsonObject datasetJson) {
+        Model model = ModelFactory.createDefaultModel();
+        // The RDF stuff using Apache Jena
+
+        // make the model use prefixes
+        model.setNsPrefix("dcat", "http://www.w3.org/ns/dcat#");
+        model.setNsPrefix("dct", "http://purl.org/dc/terms/");
+        model.setNsPrefix("rdfs", "http://www.w3.org/2000/01/rdf-schema#");
+        model.setNsPrefix("dcatap", "http://data.europa.eu/r5r/");
+
+        // add the dcat ap dataset to the model
+        Resource datasetModel = model.createResource("dcat:dataset");
+
+        // not sure the next is needed, actually I do not fully understand this aspect but...
+        datasetModel.addProperty(model.createProperty("rdfs:type"), "dcat:Dataset");
+        
+        // dcatap:applicableLegislation <http://data.europa.eu/eli/reg/2022/868/oj>;
+        datasetModel.addProperty(model.createProperty("dcatap:applicableLegislation"), "http://data.europa.eu/eli/reg/2022/868/oj");
+        
+        String persistendURL = datasetJson.getString("persistentUrl", "no-persistent-url");
+
+        datasetModel.addProperty(model.createProperty("dct:identifier"), persistendURL);
+        
+        // drill down to some useful objects
+        JsonObject datasetVersion = datasetJson.getJsonObject("datasetVersion");
+        // get citation metadata block, with most important metadata
+        JsonObject citationBlock = datasetVersion.getJsonObject("metadataBlocks").getJsonObject("citation");
+        // get the fields array from citation block
+        JsonArray citationFields = citationBlock.getJsonArray("fields");
+
+        // absolute minimal is title and description
+        String title = getPrimitiveValueFromFieldsByTypeName(citationFields, "title", "no-title");
+        datasetModel.addProperty(model.createProperty("dct:title"), model.createLiteral(title, "en"));
+        
+        String description = "no-description"; 
+        // that json has a complex structure :-(
+        JsonArray dsDescriptions = getValuesFromCompoundFieldByTypeName(citationFields, "dsDescription");
+        // find the first dsDescriptionValue
+        for (int i = 0; i < dsDescriptions.size(); i++) {
+            JsonObject dsDescription = dsDescriptions.getJsonObject(i);
+            JsonObject dsDescriptionValue = dsDescription.getJsonObject("dsDescriptionValue");
+            if (dsDescriptionValue != null) {
+                description = dsDescriptionValue.getString("value", "no-description");
+                break;
+            }
+        }
+        datasetModel.addProperty(model.createProperty("dct:description"), model.createLiteral(description, "en"));
+        
+        String pubDate = datasetVersion.getString("publicationDate", "no-publication-date");
+        datasetModel.addProperty(model.createProperty("dct:issued"), pubDate);
+        // lastUpdateTime is actually the same if the Dataset is published, but...
+        String lastUpdateTime = datasetVersion.getString("lastUpdateTime", "no-last-update-time");
+        // parse lastUpdateTime to proper date object
+        String formattedLastUpdateTime = lastUpdateTime;
+        try {
+            LocalDateTime parsedDateTime = LocalDateTime.parse(lastUpdateTime, DateTimeFormatter.ISO_DATE_TIME);
+            formattedLastUpdateTime = parsedDateTime.format(DateTimeFormatter.ISO_DATE);
+        } catch (Exception e) {
+            System.out.println("Failed to parse lastUpdateTime: " + lastUpdateTime);
+        }
+        datasetModel.addProperty(model.createProperty("dct:modified"), formattedLastUpdateTime);
+        
+        // find any files and add them as distributions
+        // Note that dcat-ap there should be at least one file/distribution, 
+        // but Dataverse does not force that!
+        JsonArray files = datasetVersion.getJsonArray("files");
+        for (int i = 0; i < files.size(); i++) {
+            JsonObject fileObj = files.getJsonObject(i);
+            JsonObject dataFile = fileObj.getJsonObject("dataFile");
+            String fileName = dataFile.getString("filename", "no-filename");
+            //String downloadUrl = dataFile.getString("downloadUrl", "no-download-url");
+
+            // create a distribution resource
+            // each one is uniquely identified by its title here
+            // use string interpolation to make unique URIs
+            Resource distribution = model.createResource();//"dcat:distribution/" + i)
+
+            // if restricted, do something?
+            //Boolean restricted = fileObj.getBoolean("restricted");   
+
+            distribution.addProperty(model.createProperty("dct:title"), fileName);
+            distribution.addProperty(model.createProperty("dcat:accessURL"), persistendURL);
+            // we always have here DOWNLOADABLE_FILE, even if we cannot really download it
+            distribution.addProperty(model.createProperty("dct:type"),
+                    "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE");
+            Integer bytesize = dataFile.getInt("filesize", 0);
+            distribution.addProperty(model.createProperty("dcat:byteSize"), bytesize.toString());
+
+            // link the distribution to the dataset
+            datasetModel.addProperty(model.createProperty("dcat:distribution"), distribution);
+        }
+        
+        return model;
+    }
+    
+    // JSON helper stuff, should be able to get better Dataverse JSON aware stuff from elsewhere?
+    
     String getPrimitiveValueFromFieldsByTypeName(JsonArray fields, String typeName, String defaultValue) {
         for (int i = 0; i < fields.size(); i++) {
             JsonObject field = fields.getJsonObject(i);
