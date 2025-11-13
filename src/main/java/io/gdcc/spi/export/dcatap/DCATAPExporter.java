@@ -13,6 +13,14 @@ import java.util.Locale;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.impl.RDFWriterFImpl;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.RDFFormatVariant;
+import org.apache.jena.riot.RDFLanguages;
+import org.apache.jena.riot.RDFWriter;
+import org.apache.jena.riot.writer.RDFJSONWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 // Maybe use vocabs, but for now just use strings which I like more
@@ -74,7 +82,25 @@ public class DCATAPExporter implements Exporter {
             Model model = createRDFModelFromDatasetJson(datasetJson);
             
             // TODO: how could we support these different output types using this same exporter?
-            model.write(outputStream, "JSON-LD"); // other exporters use this too
+            model.write(outputStream); // THIS always works, defaults to RDF/XML
+            
+            // Try some others
+            //RDFJSONWriter.output(outputStream, model.getGraph()); // works, but no context!
+            //model.write(outputStream, "RDF/XML"); // alos works, but thaht was the default anyway
+            //model.write(outputStream, "TURTLE"); // org.apache.jena.shared.NoWriterForLangException: Writer not found: TURTLE
+            // at org.apache.jena.rdf.model.impl.RDFWriterFImpl.getWriter(RDFWriterFImpl.java:66)
+            
+            //RDFDataMgr.write(outputStream, model, RDFFormat.TURTLE);
+            // here I got: 
+            // Caused by: java.lang.NoSuchMethodError: 'java.lang.String org.apache.jena.atlas.lib.Lib.lowercase(java.lang.String)'
+            //        at org.apache.jena.riot.RDFLanguages.canonicalKey(RDFLanguages.java:470)
+            
+            //RDFWriter.source(model.getGraph()).format(RDFFormat.JSONLD).output(outputStream);            
+            //RDFDataMgr.write(outputStream, model, RDFFormat.JSONLD);
+            //RDFDataMgr.write(outputStream, model, Lang.JSONLD11);
+            
+            // These work at build time, but fail when the jar is deployed as plugin in Dataverse:
+            //model.write(outputStream, "JSON-LD"); // other exporters use this too
             //model.write(outputStream, "RDF/XML"); // when for OAI harvesting, XML fits best
             //model.write(outputStream, "TURTLE"); // human-readable text format, best for debugging
             
@@ -94,10 +120,14 @@ public class DCATAPExporter implements Exporter {
         // The RDF stuff using Apache Jena
 
         // make the model use prefixes
-        model.setNsPrefix("dcat", "http://www.w3.org/ns/dcat#");
-        model.setNsPrefix("dct", "http://purl.org/dc/terms/");
-        model.setNsPrefix("rdfs", "http://www.w3.org/2000/01/rdf-schema#");
-        model.setNsPrefix("dcatap", "http://data.europa.eu/r5r/");
+        String DCAT = "http://www.w3.org/ns/dcat#";
+        model.setNsPrefix("dcat", DCAT);
+        String DCT = "http://purl.org/dc/terms/";
+        model.setNsPrefix("dct", DCT);
+        String RDFS = "http://www.w3.org/2000/01/rdf-schema#";
+        model.setNsPrefix("rdfs", RDFS);
+        String DCATAP = "http://data.europa.eu/r5r/";
+        model.setNsPrefix("dcatap", DCATAP);
 
         // add the dcat ap dataset to the model
         Resource datasetModel = model.createResource("dcat:dataset");

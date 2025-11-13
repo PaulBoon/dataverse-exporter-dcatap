@@ -64,12 +64,21 @@
       <artifactId>jsonassert</artifactId>
       <scope>test</scope>
     </dependency>
-      <dependency>
-          <groupId>org.apache.jena</groupId>
-          <artifactId>apache-jena-libs</artifactId>
-          <type>pom</type>
-          <version>5.6.0</version>
-      </dependency>
+    <dependency>
+      <groupId>org.apache.jena</groupId>
+      <artifactId>apache-jena-libs</artifactId>
+      <type>pom</type>
+      <version>5.6.0</version>
+      <scope>compile</scope>
+    </dependency>
+      <!-- Also specifically including jena-arq did not help, need the full apache-jena-libs -->
+<!--      <dependency>-->
+<!--          <groupId>org.apache.jena</groupId>-->
+<!--          <artifactId>jena-arq</artifactId>-->
+<!--          <version>5.6.0</version>-->
+<!--          <scope>compile</scope>-->
+<!--      </dependency>-->
+
   </dependencies>
 
   <build>
@@ -111,6 +120,24 @@
           </pom>
         </configuration>
       </plugin>
+      <!-- Build a fat jar, with those jena jars in it, hoped to get rid of org.apache.jena.shared.NoWriterForLangException -->
+        <!-- maven-assembly-plugin did not help, switched to maven-shade-plugin seems a bit cleaner -->
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <version>3.5.1</version>
+            <executions>
+                <execution>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>shade</goal>
+                    </goals>
+                    <configuration>
+                        <createDependencyReducedPom>false</createDependencyReducedPom>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
     </plugins>
   </build>
 </project>
