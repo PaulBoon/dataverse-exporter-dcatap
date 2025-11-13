@@ -83,7 +83,7 @@ public class DCATAPExporter implements Exporter {
             
             // TODO: how could we support these different output types using this same exporter?
             model.write(outputStream); // THIS always works, defaults to RDF/XML
-            
+ 
             // Try some others
             //RDFJSONWriter.output(outputStream, model.getGraph()); // works, but no context!
             //model.write(outputStream, "RDF/XML"); // alos works, but thaht was the default anyway
@@ -133,14 +133,14 @@ public class DCATAPExporter implements Exporter {
         Resource datasetModel = model.createResource("dcat:dataset");
 
         // not sure the next is needed, actually I do not fully understand this aspect but...
-        datasetModel.addProperty(model.createProperty("rdfs:type"), "dcat:Dataset");
+        datasetModel.addProperty(model.createProperty(RDFS, "type"), "dcat:Dataset");
         
         // dcatap:applicableLegislation <http://data.europa.eu/eli/reg/2022/868/oj>;
-        datasetModel.addProperty(model.createProperty("dcatap:applicableLegislation"), "http://data.europa.eu/eli/reg/2022/868/oj");
+        datasetModel.addProperty(model.createProperty(DCATAP, "applicableLegislation"), "http://data.europa.eu/eli/reg/2022/868/oj");
         
         String persistendURL = datasetJson.getString("persistentUrl", "no-persistent-url");
 
-        datasetModel.addProperty(model.createProperty("dct:identifier"), persistendURL);
+        datasetModel.addProperty(model.createProperty(DCT, "identifier"), persistendURL);
         
         // drill down to some useful objects
         JsonObject datasetVersion = datasetJson.getJsonObject("datasetVersion");
@@ -151,7 +151,7 @@ public class DCATAPExporter implements Exporter {
 
         // absolute minimal is title and description
         String title = getPrimitiveValueFromFieldsByTypeName(citationFields, "title", "no-title");
-        datasetModel.addProperty(model.createProperty("dct:title"), model.createLiteral(title, "en"));
+        datasetModel.addProperty(model.createProperty(DCT, "title"), model.createLiteral(title, "en"));
         
         String description = "no-description"; 
         // that json has a complex structure :-(
@@ -165,10 +165,10 @@ public class DCATAPExporter implements Exporter {
                 break;
             }
         }
-        datasetModel.addProperty(model.createProperty("dct:description"), model.createLiteral(description, "en"));
+        datasetModel.addProperty(model.createProperty(DCT, "description"), model.createLiteral(description, "en"));
         
         String pubDate = datasetVersion.getString("publicationDate", "no-publication-date");
-        datasetModel.addProperty(model.createProperty("dct:issued"), pubDate);
+        datasetModel.addProperty(model.createProperty(DCT, "issued"), pubDate);
         // lastUpdateTime is actually the same if the Dataset is published, but...
         String lastUpdateTime = datasetVersion.getString("lastUpdateTime", "no-last-update-time");
         // parse lastUpdateTime to proper date object
@@ -179,7 +179,7 @@ public class DCATAPExporter implements Exporter {
         } catch (Exception e) {
             System.out.println("Failed to parse lastUpdateTime: " + lastUpdateTime);
         }
-        datasetModel.addProperty(model.createProperty("dct:modified"), formattedLastUpdateTime);
+        datasetModel.addProperty(model.createProperty(DCT, "modified"), formattedLastUpdateTime);
         
         // find any files and add them as distributions
         // Note that dcat-ap there should be at least one file/distribution, 
@@ -199,16 +199,16 @@ public class DCATAPExporter implements Exporter {
             // if restricted, do something?
             //Boolean restricted = fileObj.getBoolean("restricted");   
 
-            distribution.addProperty(model.createProperty("dct:title"), fileName);
-            distribution.addProperty(model.createProperty("dcat:accessURL"), persistendURL);
+            distribution.addProperty(model.createProperty(DCT, "title"), fileName);
+            distribution.addProperty(model.createProperty(DCAT, "accessURL"), persistendURL);
             // we always have here DOWNLOADABLE_FILE, even if we cannot really download it
-            distribution.addProperty(model.createProperty("dct:type"),
+            distribution.addProperty(model.createProperty(DCT, "type"),
                     "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE");
             Integer bytesize = dataFile.getInt("filesize", 0);
-            distribution.addProperty(model.createProperty("dcat:byteSize"), bytesize.toString());
+            distribution.addProperty(model.createProperty(DCAT, "byteSize"), bytesize.toString());
 
             // link the distribution to the dataset
-            datasetModel.addProperty(model.createProperty("dcat:distribution"), distribution);
+            datasetModel.addProperty(model.createProperty(DCAT, "distribution"), distribution);
         }
         
         return model;
