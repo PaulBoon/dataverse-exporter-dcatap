@@ -1,6 +1,16 @@
 DCAT-AP Exporter for Dataverse
 ==============================
 
-This exporter is based on the DCAT-AP specification for describing datasets in a standardized way. It allows users to export metadata from Dataverse repositories into DCAT-AP compliant formats.
+This exporter is based on the DCAT-AP specification for describing datasets in a standardized way. 
+It allows users to export metadata from Dataverse Datasets into aDCAT-AP compliant format.
 
-If you install it on a test server with production data, you can export from various datasets to get an idea of what data to expect when creating your own exporter.
+__NOTE__: This exporter is a work in progress and may not yet fully comply with the DCAT-AP specification.
+
+Installation
+------------
+After building the jar with `mvn clean install`, 
+you can copy this into a directory on the server where Dataverse can load it. 
+Dataverse must be configured to load extra exporters from this directory. 
+See the Dataverse documentation for more details:
+https://guides.dataverse.org/en/latest/installation/config.html#dataverse-spi-exporters-directory
+
