@@ -128,7 +128,10 @@ public class DCATAPExporter implements Exporter {
         model.setNsPrefix("rdfs", RDFS);
         String DCATAP = "http://data.europa.eu/r5r/";
         model.setNsPrefix("dcatap", DCATAP);
-
+        String VCARD = "http://www.w3.org/2006/vcard/ns#";
+        model.setNsPrefix("vcard", VCARD); 
+        
+        
         // add the dcat ap dataset to the model
         Resource datasetModel = model.createResource("dcat:dataset");
 
@@ -180,6 +183,86 @@ public class DCATAPExporter implements Exporter {
             System.out.println("Failed to parse lastUpdateTime: " + lastUpdateTime);
         }
         datasetModel.addProperty(model.createProperty(DCT, "modified"), formattedLastUpdateTime);
+        
+        // TODO: add more metadata like creators, keywords, etc. from citationFields
+        // also mandatory ones for DCAT-AP compliance
+        
+        //dct:provenance [ a dct:ProvenanceStatement;
+        //        rdfs:label "No specific information about how the data was collected"@en;
+        //];
+        Resource provenanceStatment =  model.createResource()
+                        .addProperty(model.createProperty(RDFS, "type"), "dct:ProvenanceStatement")
+                        .addProperty(
+                                model.createProperty(RDFS, "label"),
+                                model.createLiteral(
+                                        "No specific information about how the data was collected", "en"));
+        datasetModel.addProperty(model.createProperty(DCT, "provenance"), provenanceStatment);
+
+        // Fixed contact information for now
+        // TODO: extract from datasetContact
+        // example
+        //dcat:contactPoint [
+        //        a vcard:Kind;
+        //vcard:fn "Contact point for this dataset"@en;
+        //vcard:hasEmail <mailto:info@dans.knaw.nl>;
+        //vcard:hasUrl <https://dans.knaw.nl>;
+        //];
+        Resource contactPoint = model.createResource()
+                .addProperty(model.createProperty(RDFS, "type"), "vcard:Kind")
+                .addProperty(
+                        model.createProperty(VCARD, "fn"),
+                        model.createLiteral("Contact point for this dataset", "en"))
+                .addProperty(
+                        model.createProperty(VCARD, "hasEmail"),
+                        "mailto:info@dans.knaw.nl")
+                .addProperty(
+                        model.createProperty(VCARD, "hasUrl"),
+                        "https://dans.knaw.nl");
+        datasetModel.addProperty(model.createProperty(DCAT, "contactPoint"), contactPoint);
+        
+        // 
+        // example
+        // dct:publisher [
+        //        a foaf:Agent,
+        //        foaf:Organization; 
+        //        foaf:name "DANS Data Station Life Sciences"@en;
+        //        vcard:hasURL <http://dans.knaw.nl>;        
+        //] ;
+        Resource publisher = model.createResource()
+                .addProperty(model.createProperty(RDFS, "type"), "foaf:Agent")
+                .addProperty(model.createProperty(RDFS, "type"), "foaf:Organization")
+                .addProperty(
+                        model.createProperty("http://xmlns.com/foaf/0.1/name"),
+                        model.createLiteral("DANS Data Station Life Sciences", "en"))
+                .addProperty(
+                        model.createProperty(VCARD, "hasURL"),
+                        "http://dans.knaw.nl");
+        datasetModel.addProperty(model.createProperty(DCT, "publisher"), publisher);
+        
+        // example
+        // dct:creator [
+        //        a foaf:Agent,
+        //        foaf:Person; 
+        //        foaf:name "J.N.C. Cranmer"@en;      
+        //] ;
+        Resource creator = model.createResource()
+                .addProperty(model.createProperty(RDFS, "type"), "foaf:Agent")
+                .addProperty(model.createProperty(RDFS, "type"), "foaf:Person")
+                .addProperty(
+                        model.createProperty("http://xmlns.com/foaf/0.1/name"),
+                        model.createLiteral("J.N.C. Cranmer", "en"));
+        datasetModel.addProperty(model.createProperty(DCT, "creator"), creator);
+        
+        
+        //dct:accessRights   <http://publications.europa.eu/resource/authority/access-right/PUBLIC>;
+        // need to detect if there are any access restrictions from the dataset json?
+        
+        // dcat:theme <http://publications.europa.eu/resource/authority/data-theme/HEAL> ;
+        // probably some mapping from subjects to data-themes needed here
+        // only for Health it is mandatory!
+        //datasetModel.addProperty(model.createProperty(DCAT, "theme"), "http://publications.europa.eu/resource/authority/data-theme/HEAL");
+        // if we have subject:'Medicine, Health and Life Sciences',	we can map to HEAL, and we could do HealthCDAT-AP
+        // othetwise mapping seems useless for now.
         
         // find any files and add them as distributions
         // Note that dcat-ap there should be at least one file/distribution, 
