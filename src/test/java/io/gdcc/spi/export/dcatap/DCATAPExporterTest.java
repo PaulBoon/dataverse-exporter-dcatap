@@ -113,7 +113,8 @@ public class DCATAPExporterTest {
 
     @Test
     public void testIsHarvestable() {
-        assertEquals(false, exporter.isHarvestable());
+        //assertEquals(false, exporter.isHarvestable());
+        assertEquals(true, exporter.isHarvestable());
     }
 
     @Test
@@ -123,12 +124,17 @@ public class DCATAPExporterTest {
 
     @Test
     public void testGetMediaType() {
-        assertEquals("application/json", exporter.getMediaType());
+       // assertEquals("application/json", exporter.getMediaType());
+        assertEquals("application/xml", exporter.getMediaType());
     }
 
     @Test
     public void testExportDataset() throws Exception {
         exporter.exportDataset(dataProvider, outputStream);
+        // Note that we have XML as a default for the DCAT-AP exporter
+        // So we cannot compare to expected JSON output here
+        // But we can manually inspect the output written to file
+        
 //        String expected =
 //                Files.readString(
 //                        Paths.get("src/test/resources/cars/expected/expected.json"),
@@ -137,14 +143,12 @@ public class DCATAPExporterTest {
         writeFile(actual, "cars");
 //        JSONAssert.assertEquals(expected, actual, true);
 //        assertEquals(prettyPrint(expected), prettyPrint(outputStream.toString()));
-        // print actual, for inital testing!
-        System.out.println("Actual DCAT-AP output:");
-        System.out.println(prettyPrint(actual));
     }
 
     private void writeFile(String actual, String name) throws IOException {
         Path dir = Files.createDirectories(Paths.get("src/test/resources/" + name + "/out"));
-        Path out = Paths.get(dir + "/croissant.json");
+        // Note that we have XML as a default for the DCAT-AP exporter, but at some point JSON_LD may be added
+        Path out = Paths.get(dir + "/dcatap.xml");
         Files.writeString(out, prettyPrint(actual), StandardCharsets.UTF_8);
     }
 

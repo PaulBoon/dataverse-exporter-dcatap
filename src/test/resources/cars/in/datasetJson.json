@@ -56,6 +56,20 @@
                                     "typeClass": "primitive",
                                     "value": "Harvard"
                                 }
+                            },
+                            {
+                              "authorName": {
+                                "typeName": "authorName",
+                                "multiple": false,
+                                "typeClass": "primitive",
+                                "value": "Boon, Paul"
+                              },
+                              "authorAffiliation": {
+                                "typeName": "authorAffiliation",
+                                "multiple": false,
+                                "typeClass": "primitive",
+                                "value": "DANS"
+                              }
                             }
                         ]
                     },
@@ -120,6 +134,37 @@
                         "multiple": false,
                         "typeClass": "primitive",
                         "value": "2024-03-13"
+                    },
+                    {
+                        "typeName": "keyword",
+                        "multiple": true,
+                        "typeClass": "compound",
+                        "value": [
+                          {
+                            "keywordValue": {
+                              "typeName": "keywordValue",
+                              "multiple": false,
+                              "typeClass": "primitive",
+                              "value": "Automobiles"
+                            }
+                          },
+                          {
+                            "keywordValue": {
+                              "typeName": "keywordValue",
+                              "multiple": false,
+                              "typeClass": "primitive",
+                              "value": "Vehicles"
+                            }
+                          },
+                          {
+                            "keywordValue": {
+                              "typeName": "keywordValue",
+                              "multiple": false,
+                              "typeClass": "primitive",
+                              "value": "Transportation"
+                            }
+                          }
+                        ]
                     }
                 ]
             }

@@ -28,7 +28,13 @@ import java.time.format.DateTimeFormatter;
 
 @AutoService(Exporter.class)
 public class DCATAPExporter implements Exporter {
-
+    static String DCAT = "http://www.w3.org/ns/dcat#";
+    static String DCT = "http://purl.org/dc/terms/";
+    static String RDFS = "http://www.w3.org/2000/01/rdf-schema#";
+    static String DCATAP = "http://data.europa.eu/r5r/";
+    static String VCARD = "http://www.w3.org/2006/vcard/ns#";
+    static String FOAF = "http://xmlns.com/foaf/0.1/";
+    
     /**
      * The name of the format it creates. If this format is already provided by a built-in exporter,
      * this Exporter will override the built-in one. (Note that exports are cached, so existing
@@ -52,7 +58,8 @@ public class DCATAPExporter implements Exporter {
     /** Whether the exported format should be available as an option for Harvesting. */
     @Override
     public Boolean isHarvestable() {
-        return false;
+        //return false;
+        return true; // For the RDF XML we can have it harvestable
     }
 
     /** Whether the exported format should be available for download in the UI and API. */
@@ -67,9 +74,11 @@ public class DCATAPExporter implements Exporter {
      */
     @Override
     public String getMediaType() {
-        return MediaType.APPLICATION_JSON;
+        //return MediaType.APPLICATION_JSON;
+        return MediaType.APPLICATION_XML; // RDF/XML as default for DCAT-AP, somehow JSON-LD does not work well
+        // also we would like XML in the OAI-PMH harvesting output!
     }
-
+    
     /**
      * This method is called by Dataverse when metadata for a given dataset in this format is
      * requested.
@@ -120,17 +129,12 @@ public class DCATAPExporter implements Exporter {
         // The RDF stuff using Apache Jena
 
         // make the model use prefixes
-        String DCAT = "http://www.w3.org/ns/dcat#";
         model.setNsPrefix("dcat", DCAT);
-        String DCT = "http://purl.org/dc/terms/";
         model.setNsPrefix("dct", DCT);
-        String RDFS = "http://www.w3.org/2000/01/rdf-schema#";
         model.setNsPrefix("rdfs", RDFS);
-        String DCATAP = "http://data.europa.eu/r5r/";
         model.setNsPrefix("dcatap", DCATAP);
-        String VCARD = "http://www.w3.org/2006/vcard/ns#";
-        model.setNsPrefix("vcard", VCARD); 
-        
+        model.setNsPrefix("vcard", VCARD);
+        model.setNsPrefix("foaf", FOAF);
         
         // add the dcat ap dataset to the model
         Resource datasetModel = model.createResource("dcat:dataset");
@@ -147,17 +151,26 @@ public class DCATAPExporter implements Exporter {
         
         // drill down to some useful objects
         JsonObject datasetVersion = datasetJson.getJsonObject("datasetVersion");
+        
+        // add version info
+        // note that the citation uses a 'V' before the version number, 
+        // so we do that here as well
+        int versionNumber = datasetVersion.getInt("versionNumber");
+        int versionMinorNumber = datasetVersion.getInt("versionMinorNumber");
+        String versionInfo = String.format("V%d.%d", versionNumber, versionMinorNumber);
+        datasetModel.addProperty(model.createProperty(DCT, "hasVersion"), versionInfo);
+        
         // get citation metadata block, with most important metadata
         JsonObject citationBlock = datasetVersion.getJsonObject("metadataBlocks").getJsonObject("citation");
         // get the fields array from citation block
         JsonArray citationFields = citationBlock.getJsonArray("fields");
 
-        // absolute minimal is title and description
+        // absolute minimal for DCAT is title and description
+        
         String title = getPrimitiveValueFromFieldsByTypeName(citationFields, "title", "no-title");
         datasetModel.addProperty(model.createProperty(DCT, "title"), model.createLiteral(title, "en"));
         
-        String description = "no-description"; 
-        // that json has a complex structure :-(
+        String description = "no-description"; // provide default, because mandatory 
         JsonArray dsDescriptions = getValuesFromCompoundFieldByTypeName(citationFields, "dsDescription");
         // find the first dsDescriptionValue
         for (int i = 0; i < dsDescriptions.size(); i++) {
@@ -169,6 +182,8 @@ public class DCATAPExporter implements Exporter {
             }
         }
         datasetModel.addProperty(model.createProperty(DCT, "description"), model.createLiteral(description, "en"));
+        
+        // add more metadata from citationFields
         
         String pubDate = datasetVersion.getString("publicationDate", "no-publication-date");
         datasetModel.addProperty(model.createProperty(DCT, "issued"), pubDate);
@@ -184,12 +199,9 @@ public class DCATAPExporter implements Exporter {
         }
         datasetModel.addProperty(model.createProperty(DCT, "modified"), formattedLastUpdateTime);
         
-        // TODO: add more metadata like creators, keywords, etc. from citationFields
-        // also mandatory ones for DCAT-AP compliance
+        // next also mandatory ones for DCAT-AP compliance
         
-        //dct:provenance [ a dct:ProvenanceStatement;
-        //        rdfs:label "No specific information about how the data was collected"@en;
-        //];
+        // we do not have any explicit provenance information in Dataverse for now
         Resource provenanceStatment =  model.createResource()
                         .addProperty(model.createProperty(RDFS, "type"), "dct:ProvenanceStatement")
                         .addProperty(
@@ -197,37 +209,9 @@ public class DCATAPExporter implements Exporter {
                                 model.createLiteral(
                                         "No specific information about how the data was collected", "en"));
         datasetModel.addProperty(model.createProperty(DCT, "provenance"), provenanceStatment);
-
-        // Fixed contact information for now
-        // TODO: extract from datasetContact
-        // example
-        //dcat:contactPoint [
-        //        a vcard:Kind;
-        //vcard:fn "Contact point for this dataset"@en;
-        //vcard:hasEmail <mailto:info@dans.knaw.nl>;
-        //vcard:hasUrl <https://dans.knaw.nl>;
-        //];
-        Resource contactPoint = model.createResource()
-                .addProperty(model.createProperty(RDFS, "type"), "vcard:Kind")
-                .addProperty(
-                        model.createProperty(VCARD, "fn"),
-                        model.createLiteral("Contact point for this dataset", "en"))
-                .addProperty(
-                        model.createProperty(VCARD, "hasEmail"),
-                        "mailto:info@dans.knaw.nl")
-                .addProperty(
-                        model.createProperty(VCARD, "hasUrl"),
-                        "https://dans.knaw.nl");
-        datasetModel.addProperty(model.createProperty(DCAT, "contactPoint"), contactPoint);
         
-        // 
-        // example
-        // dct:publisher [
-        //        a foaf:Agent,
-        //        foaf:Organization; 
-        //        foaf:name "DANS Data Station Life Sciences"@en;
-        //        vcard:hasURL <http://dans.knaw.nl>;        
-        //] ;
+        // Publisher would be the organisation behind the Dataverse installation itself, for now hardcoded
+        // maybe we can make the plugin configurable to set this properly?
         Resource publisher = model.createResource()
                 .addProperty(model.createProperty(RDFS, "type"), "foaf:Agent")
                 .addProperty(model.createProperty(RDFS, "type"), "foaf:Organization")
@@ -238,20 +222,18 @@ public class DCATAPExporter implements Exporter {
                         model.createProperty(VCARD, "hasURL"),
                         "http://dans.knaw.nl");
         datasetModel.addProperty(model.createProperty(DCT, "publisher"), publisher);
-        
-        // example
-        // dct:creator [
-        //        a foaf:Agent,
-        //        foaf:Person; 
-        //        foaf:name "J.N.C. Cranmer"@en;      
-        //] ;
-        Resource creator = model.createResource()
-                .addProperty(model.createProperty(RDFS, "type"), "foaf:Agent")
-                .addProperty(model.createProperty(RDFS, "type"), "foaf:Person")
-                .addProperty(
-                        model.createProperty("http://xmlns.com/foaf/0.1/name"),
-                        model.createLiteral("J.N.C. Cranmer", "en"));
-        datasetModel.addProperty(model.createProperty(DCT, "creator"), creator);
+
+        JsonArray contactPoints = getValuesFromCompoundFieldByTypeName(citationFields, "datasetContact");
+        Resource contactPoint = createContactPoint(model, contactPoints);
+        datasetModel.addProperty(model.createProperty(DCAT, "contactPoint"), contactPoint);
+
+        // Creators are the authors from citationFields
+        JsonArray authors = getValuesFromCompoundFieldByTypeName(citationFields, "author");
+        for (int i = 0; i < authors.size(); i++) {
+            JsonObject authorObj = authors.getJsonObject(i);
+            Resource creatorResource = createCreator(model, authorObj);
+            datasetModel.addProperty(model.createProperty(DCT, "creator"), creatorResource);
+        }
         
         
         //dct:accessRights   <http://publications.europa.eu/resource/authority/access-right/PUBLIC>;
@@ -262,7 +244,23 @@ public class DCATAPExporter implements Exporter {
         // only for Health it is mandatory!
         //datasetModel.addProperty(model.createProperty(DCAT, "theme"), "http://publications.europa.eu/resource/authority/data-theme/HEAL");
         // if we have subject:'Medicine, Health and Life Sciences',	we can map to HEAL, and we could do HealthCDAT-AP
-        // othetwise mapping seems useless for now.
+        // otherwise mapping seems useless for now.
+
+        // subjects as dct:subject, could also be added as a keyword    ?
+        // keywords would be good, if we have them
+        JsonArray keywords = getValuesFromCompoundFieldByTypeName(citationFields, "keyword");
+        for (int i = 0; i < keywords.size(); i++) {
+            JsonObject keywordObj = keywords.getJsonObject(i);
+            JsonObject keywordValueObj = keywordObj.getJsonObject("keywordValue");
+            if (keywordValueObj != null) {
+                String keywordValue = keywordValueObj.getString("value", "");
+                if (!keywordValue.isEmpty()) {
+                    datasetModel.addProperty(
+                            model.createProperty(DCAT, "keyword"),
+                            model.createLiteral(keywordValue, "en"));
+                }
+            }
+        }
         
         // find any files and add them as distributions
         // Note that dcat-ap there should be at least one file/distribution, 
@@ -270,31 +268,104 @@ public class DCATAPExporter implements Exporter {
         JsonArray files = datasetVersion.getJsonArray("files");
         for (int i = 0; i < files.size(); i++) {
             JsonObject fileObj = files.getJsonObject(i);
-            JsonObject dataFile = fileObj.getJsonObject("dataFile");
-            String fileName = dataFile.getString("filename", "no-filename");
-            //String downloadUrl = dataFile.getString("downloadUrl", "no-download-url");
-
-            // create a distribution resource
-            // each one is uniquely identified by its title here
-            // use string interpolation to make unique URIs
-            Resource distribution = model.createResource();//"dcat:distribution/" + i)
-
-            // if restricted, do something?
-            //Boolean restricted = fileObj.getBoolean("restricted");   
-
-            distribution.addProperty(model.createProperty(DCT, "title"), fileName);
+            Resource distribution = createFileDistribution(model, fileObj);
+            // add the accessURL to the distribution, using the dataset persistent URL
             distribution.addProperty(model.createProperty(DCAT, "accessURL"), persistendURL);
-            // we always have here DOWNLOADABLE_FILE, even if we cannot really download it
-            distribution.addProperty(model.createProperty(DCT, "type"),
-                    "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE");
-            Integer bytesize = dataFile.getInt("filesize", 0);
-            distribution.addProperty(model.createProperty(DCAT, "byteSize"), bytesize.toString());
-
             // link the distribution to the dataset
             datasetModel.addProperty(model.createProperty(DCAT, "distribution"), distribution);
         }
         
         return model;
+    }
+    
+    Resource createFileDistribution(Model model, JsonObject fileObj) {
+        Resource distribution = model.createResource();
+
+        JsonObject dataFile = fileObj.getJsonObject("dataFile");
+        String fileName = dataFile.getString("filename", "no-filename");
+        //String downloadUrl = dataFile.getString("downloadUrl", "no-download-url");
+        // accessURL is added later, when we have the dataset persistent URL, 
+        // there is no download URL for a file alone
+        
+        // if restricted, do something?
+        //Boolean restricted = fileObj.getBoolean("restricted");   
+
+        distribution.addProperty(model.createProperty(DCT, "title"), fileName);
+        
+        // we always have here DOWNLOADABLE_FILE, even if we cannot really download it
+        distribution.addProperty(model.createProperty(DCT, "type"),
+                "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE");
+        Integer bytesize = dataFile.getInt("filesize", 0);
+        distribution.addProperty(model.createProperty(DCAT, "byteSize"), bytesize.toString());
+        
+        return distribution;
+    }
+    
+    Resource createCreator(Model model, JsonObject author) {
+        Resource creatorResource = model.createResource();
+            //creatorResource.addProperty(model.createProperty(RDFS, "type"), "foaf:Agent");
+            // assume person for now
+        creatorResource.addProperty(model.createProperty(RDFS, "type"), "foaf:Person");
+        
+        JsonObject authorName = author.getJsonObject("authorName");
+        if (authorName != null) {
+            String authorNameValue = authorName.getString("value", "");
+            creatorResource.addProperty(
+                    model.createProperty(FOAF, "name"),
+                    model.createLiteral(authorNameValue, "en"));
+        }
+        JsonObject authorAffiliation = author.getJsonObject("authorAffiliation");
+        if (authorAffiliation != null) {
+            String authorAffiliationValue = authorAffiliation.getString("value", "");
+            if (!authorAffiliationValue.isEmpty()) {
+                // vcard for affiliation, supposed to be organization-name
+                creatorResource.addProperty(
+                        model.createProperty(VCARD, "organization-name"),
+                        model.createLiteral(authorAffiliationValue, "en"));
+            }
+        }
+        return creatorResource;
+    }
+    
+    Resource createContactPoint (Model model, JsonArray contactPoints) {
+        Resource contactPointResource = null;
+        // just take the first one for now, if any
+        
+        if (contactPoints.size() > 0) {
+            contactPointResource = model.createResource();
+            
+            JsonObject contactPointObj = contactPoints.getJsonObject(0);
+            JsonObject contactName = contactPointObj.getJsonObject("datasetContactName");
+            if (contactName != null) {
+                String contactNameValue = contactName.getString("value", "");
+                contactPointResource.addProperty(
+                        model.createProperty(VCARD, "fn"),
+                        model.createLiteral(contactNameValue, "en"));
+            }
+
+            JsonObject contactEmail = contactPointObj.getJsonObject("datasetContactEmail");
+            if (contactEmail != null) {
+                String contactEmailValue = contactEmail.getString("value", "");
+                if (!contactEmailValue.isEmpty()) {
+                    contactPointResource.addProperty(
+                            model.createProperty(VCARD, "hasEmail"),
+                            "mailto:" + contactEmailValue);
+                }
+            }
+            
+            JsonObject contactAffiliation = contactPointObj.getJsonObject("datasetContactAffiliation");
+            if (contactAffiliation != null) {
+                String contactAffiliationValue = contactAffiliation.getString("value", "");
+                if (!contactAffiliationValue.isEmpty()) {
+                    // vcard for affiliation, supposed to be organization-name
+                    contactPointResource.addProperty(
+                            model.createProperty(VCARD, "organization-name"),
+                            model.createLiteral(contactAffiliationValue, "en"));
+                }
+            }
+        }
+        
+        return contactPointResource;
     }
     
     // JSON helper stuff, should be able to get better Dataverse JSON aware stuff from elsewhere?
