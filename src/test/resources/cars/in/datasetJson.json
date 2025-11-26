@@ -39,6 +39,15 @@
                         "value": "Cars"
                     },
                     {
+                      "typeName": "alternativeTitle",
+                      "multiple": true,
+                      "typeClass": "primitive",
+                      "value": [
+                        "some alternative title 1",
+                        "some alternative title 2"
+                      ]
+                    },
+                    {
                         "typeName": "author",
                         "multiple": true,
                         "typeClass": "compound",

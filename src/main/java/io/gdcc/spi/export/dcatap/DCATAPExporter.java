@@ -9,6 +9,7 @@ import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.ws.rs.core.MediaType;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.Locale;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -145,8 +146,9 @@ public class DCATAPExporter implements Exporter {
         // not sure the next is needed, actually I do not fully understand this aspect but...
         datasetModel.addProperty(model.createProperty(RDFS, "type"), "dcat:Dataset");
         
+        // applicableLegislation, only mandatory for HealthDCAT-AP, so skipping for now
         // dcatap:applicableLegislation <http://data.europa.eu/eli/reg/2022/868/oj>;
-        datasetModel.addProperty(model.createProperty(DCATAP, "applicableLegislation"), "http://data.europa.eu/eli/reg/2022/868/oj");
+        //datasetModel.addProperty(model.createProperty(DCATAP, "applicableLegislation"), "http://data.europa.eu/eli/reg/2022/868/oj");
         
         String persistendURL = datasetJson.getString("persistentUrl", "no-persistent-url");
 
@@ -239,7 +241,31 @@ public class DCATAPExporter implements Exporter {
             datasetModel.addProperty(model.createProperty(DCT, "creator"), creatorResource);
         }
 
-
+        // alternative title, is alternativeTitle multiple primitive
+        List<String> altTitles = getPrimitiveValueArrayFromFieldsByTypeName(citationFields, "alternativeTitle");
+        for (String altTitleValue : altTitles) {
+                datasetModel.addProperty(
+                        model.createProperty(DCT, "alternative"),
+                        model.createLiteral(altTitleValue, "en"));
+        }
+        
+        // Note: we could try to determine dataset license, and somehow add it to each file distribution as well
+        // we have the name and the uri in the license object, but can we map that?
+        // just the URI, but note that we do nat have license on dataset level, only on file level
+//        JsonObject licenseObj = datasetVersion.getJsonObject("license");
+//        if (licenseObj != null) {
+//            String licenseURI = licenseObj.getString("uri", "");
+//            if (!licenseURI.isEmpty()) {
+//                datasetModel.addProperty(model.createProperty(DCT, "license"), licenseURI);
+//            }
+//        }
+        
+        // Determine the dataset language, if any
+        // Note that it is not the same as the metadata language, which is now assumed default '@en' !
+        // also there is a multi-values fields, we can have multiple languages and the list of code is huge
+        // and most like need mapping to something useful for DCAT-AP
+        //String language = getPrimitiveValueFromFieldsByTypeName(citationFields, "language", "");
+        
         // accessRights is mandatory for DCAT-AP-NL, not for DCAT-AP, so skipping for now
         //dct:accessRights   <http://publications.europa.eu/resource/authority/access-right/PUBLIC>;
         // need to detect if there are any access restrictions from the dataset json?
@@ -258,6 +284,7 @@ public class DCATAPExporter implements Exporter {
             JsonObject keywordValueObj = keywordObj.getJsonObject("keywordValue");
             if (keywordValueObj != null) {
                 String keywordValue = keywordValueObj.getString("value", "");
+                // Note that keywords kan have URI's when an CVOC is used, but for now just use the literal value
                 if (!keywordValue.isEmpty()) {
                     datasetModel.addProperty(
                             model.createProperty(DCAT, "keyword"),
@@ -354,12 +381,14 @@ public class DCATAPExporter implements Exporter {
                 return "checksumAlgorithm_md5";
             case "SHA-1":
                 return "checksumAlgorithm_sha1";
+            case "SHA-224": 
+                return "checksumAlgorithm_sha224";
             case "SHA-256":
                 return "checksumAlgorithm_sha256";
-            //case "SHA-512":
-            //    return "checksumAlgorithm_sha512";
+            case "SHA-512":
+                return "checksumAlgorithm_sha512";
             default:
-                return "";// empty indicates we do not have a mapping
+                return ""; // empty indicates we do not have a mapping
         }
     }
     
@@ -372,6 +401,7 @@ public class DCATAPExporter implements Exporter {
         JsonObject authorName = author.getJsonObject("authorName");
         if (authorName != null) {
             String authorNameValue = authorName.getString("value", "");
+            // But what if it is a ORCID or other autor identifier?
             creatorResource.addProperty(
                     model.createProperty(FOAF, "name"),
                     model.createLiteral(authorNameValue, "en"));
@@ -381,6 +411,8 @@ public class DCATAPExporter implements Exporter {
             String authorAffiliationValue = authorAffiliation.getString("value", "");
             if (!authorAffiliationValue.isEmpty()) {
                 // vcard for affiliation, supposed to be organization-name
+                // But what if it is a ROR or other organisation identifier?
+                // expandedvalue.termName could be used for getting the humanreadable name
                 creatorResource.addProperty(
                         model.createProperty(VCARD, "organization-name"),
                         model.createLiteral(authorAffiliationValue, "en"));
@@ -400,6 +432,7 @@ public class DCATAPExporter implements Exporter {
             JsonObject contactName = contactPointObj.getJsonObject("datasetContactName");
             if (contactName != null) {
                 String contactNameValue = contactName.getString("value", "");
+                // But what if it is a ORCID or other autor identifier?
                 contactPointResource.addProperty(
                         model.createProperty(VCARD, "fn"),
                         model.createLiteral(contactNameValue, "en"));
@@ -444,6 +477,35 @@ public class DCATAPExporter implements Exporter {
         }
         return defaultValue;
     }
+    
+    // we can have a primitive with multiple values as well, so return a String array
+    List<String> getPrimitiveValueArrayFromFieldsByTypeName(JsonArray fields, String typeName)
+    {
+        for (int i = 0; i < fields.size(); i++) {
+            JsonObject field = fields.getJsonObject(i);
+            if (field.getString("typeName").equals(typeName)) {
+                // if it has "typeClass": "primitive", just get the value
+                if (field.getString("typeClass").equals("primitive")) {
+                    // check that we have "multiple": true
+                    if (!field.getBoolean("multiple", false)) {
+                        // not multiple, list with single value
+                        String singleValue = field.getString("value", "");
+                        return java.util.Collections.singletonList(singleValue);
+                    } else {
+                        JsonArray valuesArray = field.getJsonArray("value");
+                        // convert JsonArray to List<String>
+                        List<String> valuesList = new java.util.ArrayList<>();
+                        for (int j = 0; j < valuesArray.size(); j++) {
+                            valuesList.add(valuesArray.getString(j, ""));
+                        }
+                        return valuesList;
+                    }
+                }
+            }
+        }
+        return java.util.Collections.emptyList();
+    }
+    
     
     JsonArray getValuesFromCompoundFieldByTypeName(JsonArray fields, String typeName) {
         for (int i = 0; i < fields.size(); i++) {
