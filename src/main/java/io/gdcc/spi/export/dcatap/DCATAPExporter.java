@@ -34,6 +34,8 @@ public class DCATAPExporter implements Exporter {
     static String DCATAP = "http://data.europa.eu/r5r/";
     static String VCARD = "http://www.w3.org/2006/vcard/ns#";
     static String FOAF = "http://xmlns.com/foaf/0.1/";
+    static String SPDX = "http://spdx.org/rdf/terms#";
+    
     
     /**
      * The name of the format it creates. If this format is already provided by a built-in exporter,
@@ -135,6 +137,7 @@ public class DCATAPExporter implements Exporter {
         model.setNsPrefix("dcatap", DCATAP);
         model.setNsPrefix("vcard", VCARD);
         model.setNsPrefix("foaf", FOAF);
+        model.setNsPrefix("spdx", SPDX);
         
         // add the dcat ap dataset to the model
         Resource datasetModel = model.createResource("dcat:dataset");
@@ -210,18 +213,19 @@ public class DCATAPExporter implements Exporter {
                                         "No specific information about how the data was collected", "en"));
         datasetModel.addProperty(model.createProperty(DCT, "provenance"), provenanceStatment);
         
-        // Publisher would be the organisation behind the Dataverse installation itself, for now hardcoded
+        // Publisher would be the organisation behind the Dataverse installation itself
         // maybe we can make the plugin configurable to set this properly?
-        Resource publisher = model.createResource()
-                .addProperty(model.createProperty(RDFS, "type"), "foaf:Agent")
-                .addProperty(model.createProperty(RDFS, "type"), "foaf:Organization")
-                .addProperty(
-                        model.createProperty("http://xmlns.com/foaf/0.1/name"),
-                        model.createLiteral("DANS Data Station Life Sciences", "en"))
-                .addProperty(
-                        model.createProperty(VCARD, "hasURL"),
-                        "http://dans.knaw.nl");
-        datasetModel.addProperty(model.createProperty(DCT, "publisher"), publisher);
+        // This is mandatory for DCAT-AP-NL, not for DCAT-AP, so skipping for now
+//        Resource publisher = model.createResource()
+//                .addProperty(model.createProperty(RDFS, "type"), "foaf:Agent")
+//                .addProperty(model.createProperty(RDFS, "type"), "foaf:Organization")
+//                .addProperty(
+//                        model.createProperty("http://xmlns.com/foaf/0.1/name"),
+//                        model.createLiteral("DANS Data Station Life Sciences", "en"))
+//                .addProperty(
+//                        model.createProperty(VCARD, "hasURL"),
+//                        "http://dans.knaw.nl");
+//        datasetModel.addProperty(model.createProperty(DCT, "publisher"), publisher);
 
         JsonArray contactPoints = getValuesFromCompoundFieldByTypeName(citationFields, "datasetContact");
         Resource contactPoint = createContactPoint(model, contactPoints);
@@ -234,8 +238,9 @@ public class DCATAPExporter implements Exporter {
             Resource creatorResource = createCreator(model, authorObj);
             datasetModel.addProperty(model.createProperty(DCT, "creator"), creatorResource);
         }
-        
-        
+
+
+        // accessRights is mandatory for DCAT-AP-NL, not for DCAT-AP, so skipping for now
         //dct:accessRights   <http://publications.europa.eu/resource/authority/access-right/PUBLIC>;
         // need to detect if there are any access restrictions from the dataset json?
         
@@ -246,7 +251,6 @@ public class DCATAPExporter implements Exporter {
         // if we have subject:'Medicine, Health and Life Sciences',	we can map to HEAL, and we could do HealthCDAT-AP
         // otherwise mapping seems useless for now.
 
-        // subjects as dct:subject, could also be added as a keyword    ?
         // keywords would be good, if we have them
         JsonArray keywords = getValuesFromCompoundFieldByTypeName(citationFields, "keyword");
         for (int i = 0; i < keywords.size(); i++) {
@@ -261,6 +265,8 @@ public class DCATAPExporter implements Exporter {
                 }
             }
         }
+        // subjects as dct:subject, could also be added as a keyword
+        // however, what if it just was 'Other', we could skip that as a keyword I think ?
         
         // find any files and add them as distributions
         // Note that dcat-ap there should be at least one file/distribution, 
@@ -292,13 +298,68 @@ public class DCATAPExporter implements Exporter {
 
         distribution.addProperty(model.createProperty(DCT, "title"), fileName);
         
-        // we always have here DOWNLOADABLE_FILE, even if we cannot really download it
-        distribution.addProperty(model.createProperty(DCT, "type"),
-                "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE");
+        // type is not mandatory for DCAT-AP, so skipping for now
+        // we always have here DOWNLOADABLE_FILE, even if we cannot really download it?
+        //distribution.addProperty(model.createProperty(DCT, "type"),
+        //        "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE");
+        
         Integer bytesize = dataFile.getInt("filesize", 0);
         distribution.addProperty(model.createProperty(DCAT, "byteSize"), bytesize.toString());
         
+        // description is mandatory for DCAT-AP, so provide a default
+        // dct:description "No specific description available"@en;
+        String description = dataFile.getString("description", "No specific description available");
+        if (description.isEmpty()) {
+            description = "No specific description available";
+        }
+        distribution.addProperty(
+                model.createProperty(DCT, "description"),
+                model.createLiteral(description, "en"));
+        
+        
+        // DCT format; use MIME type from contentType, but that would need some mapping
+        // use mediatype from IANA
+        String mimeType = dataFile.getString("contentType", "application/octet-stream");
+        distribution.addProperty(
+                model.createProperty(DCAT, "mediaType"),
+                "http://www.iana.org/assignments/media-types/" + mimeType);
+        
+        
+        // checksum would be nice to have as well
+        JsonObject checksumObj = dataFile.getJsonObject("checksum");
+        if (checksumObj != null) {
+            String checksumValue = checksumObj.getString("value", "");
+            String checksumType = checksumObj.getString("type", "MD5"); // default to MD5
+            String checksumAlgorithm = getSPDXChecksumAlgorithmURI(checksumType);
+            if (!checksumAlgorithm.isEmpty() && !checksumValue.isEmpty()) {
+                Resource checksumResource = model.createResource()
+                        .addProperty(
+                                model.createProperty(SPDX, "algorithm"),
+                                checksumAlgorithm)
+                        .addProperty(
+                                model.createProperty(SPDX, "checksumValue"),
+                                checksumValue);
+                distribution.addProperty(model.createProperty(SPDX, "checksum"), checksumResource);
+            }
+        }
+        
         return distribution;
+    }
+    
+    // return the algorithm for SPDX based on the type string from Dataverse
+    String getSPDXChecksumAlgorithmURI(String type) {
+        switch (type.toUpperCase()) {
+            case "MD5":
+                return "checksumAlgorithm_md5";
+            case "SHA1":
+                return "checksumAlgorithm_sha1";
+            case "SHA256":
+                return "checksumAlgorithm_sha256";
+            //case "SHA512":
+            //    return "checksumAlgorithm_sha512";
+            default:
+                return "";// empty indicates we do not have a mapping "checksumAlgorithm_other";
+        }
     }
     
     Resource createCreator(Model model, JsonObject author) {
