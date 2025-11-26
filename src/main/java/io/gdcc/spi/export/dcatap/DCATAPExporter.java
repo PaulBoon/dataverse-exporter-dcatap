@@ -348,17 +348,18 @@ public class DCATAPExporter implements Exporter {
     
     // return the algorithm for SPDX based on the type string from Dataverse
     String getSPDXChecksumAlgorithmURI(String type) {
+        // note that Dataverse StandardSupportedAlgorithms use a minus with SHA
         switch (type.toUpperCase()) {
             case "MD5":
                 return "checksumAlgorithm_md5";
-            case "SHA1":
+            case "SHA-1":
                 return "checksumAlgorithm_sha1";
-            case "SHA256":
+            case "SHA-256":
                 return "checksumAlgorithm_sha256";
-            //case "SHA512":
+            //case "SHA-512":
             //    return "checksumAlgorithm_sha512";
             default:
-                return "";// empty indicates we do not have a mapping "checksumAlgorithm_other";
+                return "";// empty indicates we do not have a mapping
         }
     }
     
