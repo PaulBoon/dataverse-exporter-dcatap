@@ -4,7 +4,8 @@ DCAT-AP Exporter for Dataverse
 This exporter is based on the DCAT-AP specification for describing datasets in a standardized way. 
 It allows users to export metadata from Dataverse Datasets into aDCAT-AP compliant format.
 
-__NOTE__: This exporter is a work in progress and may not yet fully comply with the DCAT-AP specification.
+> [!WARNING]
+> This exporter is a work in progress and may not yet fully comply with the DCAT-AP specification.
 
 Installation
 ------------
