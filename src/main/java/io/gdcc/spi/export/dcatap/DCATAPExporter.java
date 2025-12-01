@@ -4,6 +4,7 @@ import com.google.auto.service.AutoService;
 import io.gdcc.spi.export.ExportDataProvider;
 import io.gdcc.spi.export.ExportException;
 import io.gdcc.spi.export.Exporter;
+import io.gdcc.spi.export.XMLExporter;
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
@@ -27,8 +28,8 @@ import java.time.format.DateTimeFormatter;
 // Maybe use vocabs, but for now just use strings which I like more
 //import org.apache.jena.vocabulary.RDFS;
 
-@AutoService(Exporter.class)
-public class DCATAPExporter implements Exporter {
+@AutoService(XMLExporter.class)
+public class DCATAPExporter implements XMLExporter {
     static String DCAT = "http://www.w3.org/ns/dcat#";
     static String DCT = "http://purl.org/dc/terms/";
     static String RDFS = "http://www.w3.org/2000/01/rdf-schema#";
@@ -69,6 +70,21 @@ public class DCATAPExporter implements Exporter {
     @Override
     public Boolean isAvailableToUsers() {
         return true;
+    }
+
+    @Override
+    public String getXMLNameSpace() {
+        return "";
+    }
+
+    @Override
+    public String getXMLSchemaLocation() {
+        return "";
+    }
+
+    @Override
+    public String getXMLSchemaVersion() {
+        return "";
     }
 
     /**
