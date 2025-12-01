@@ -98,7 +98,7 @@ public class DCATAPExporter implements Exporter {
  
             // Try some others
             //RDFJSONWriter.output(outputStream, model.getGraph()); // works, but no context!
-            //model.write(outputStream, "RDF/XML"); // alos works, but thaht was the default anyway
+            //model.write(outputStream, "RDF/XML"); // also works, but that was the default anyway
             //model.write(outputStream, "TURTLE"); // org.apache.jena.shared.NoWriterForLangException: Writer not found: TURTLE
             // at org.apache.jena.rdf.model.impl.RDFWriterFImpl.getWriter(RDFWriterFImpl.java:66)
             
@@ -150,9 +150,8 @@ public class DCATAPExporter implements Exporter {
         // dcatap:applicableLegislation <http://data.europa.eu/eli/reg/2022/868/oj>;
         //datasetModel.addProperty(model.createProperty(DCATAP, "applicableLegislation"), "http://data.europa.eu/eli/reg/2022/868/oj");
         
-        String persistendURL = datasetJson.getString("persistentUrl", "no-persistent-url");
-
-        datasetModel.addProperty(model.createProperty(DCT, "identifier"), persistendURL);
+        String persistentURL = datasetJson.getString("persistentUrl", "no-persistent-url");
+        datasetModel.addProperty(model.createProperty(DCT, "identifier"), persistentURL);
         
         // drill down to some useful objects
         JsonObject datasetVersion = datasetJson.getJsonObject("datasetVersion");
@@ -303,7 +302,7 @@ public class DCATAPExporter implements Exporter {
             JsonObject fileObj = files.getJsonObject(i);
             Resource distribution = createFileDistribution(model, fileObj);
             // add the accessURL to the distribution, using the dataset persistent URL
-            distribution.addProperty(model.createProperty(DCAT, "accessURL"), persistendURL);
+            distribution.addProperty(model.createProperty(DCAT, "accessURL"), persistentURL);
             // link the distribution to the dataset
             datasetModel.addProperty(model.createProperty(DCAT, "distribution"), distribution);
         }
@@ -330,8 +329,8 @@ public class DCATAPExporter implements Exporter {
         //distribution.addProperty(model.createProperty(DCT, "type"),
         //        "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE");
         
-        Integer bytesize = dataFile.getInt("filesize", 0);
-        distribution.addProperty(model.createProperty(DCAT, "byteSize"), bytesize.toString());
+        int bytesize = dataFile.getInt("filesize", 0);
+        distribution.addProperty(model.createProperty(DCAT, "byteSize"), String.valueOf(bytesize) ); 
         
         // description is mandatory for DCAT-AP, so provide a default
         // dct:description "No specific description available"@en;
@@ -425,7 +424,7 @@ public class DCATAPExporter implements Exporter {
         Resource contactPointResource = null;
         // just take the first one for now, if any
         
-        if (contactPoints.size() > 0) {
+        if (!contactPoints.isEmpty()) {
             contactPointResource = model.createResource();
             
             JsonObject contactPointObj = contactPoints.getJsonObject(0);
@@ -470,7 +469,8 @@ public class DCATAPExporter implements Exporter {
             JsonObject field = fields.getJsonObject(i);
             if (field.getString("typeName").equals(typeName)) {
                 // if it has "typeClass": "primitive", just get the value
-                if (field.getString("typeClass").equals("primitive")) {
+                if (field.getString("typeClass").equals("primitive") && 
+                        !field.getBoolean("multiple", false)) {
                     return field.getString("value", defaultValue);
                 }
             }
@@ -478,7 +478,7 @@ public class DCATAPExporter implements Exporter {
         return defaultValue;
     }
     
-    // we can have a primitive with multiple values as well, so return a String array
+    // we can have a primitive with multiple values as well
     List<String> getPrimitiveValueArrayFromFieldsByTypeName(JsonArray fields, String typeName)
     {
         for (int i = 0; i < fields.size(); i++) {
