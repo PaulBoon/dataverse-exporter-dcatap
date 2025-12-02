@@ -133,6 +133,16 @@
                         ]
                     },
                     {
+                      "typeName": "language",
+                      "multiple": true,
+                      "typeClass": "controlledVocabulary",
+                      "value": [
+                        "Danish",
+                        "Dutch",
+                        "English"
+                      ]
+                    },
+                    {
                         "typeName": "depositor",
                         "multiple": false,
                         "typeClass": "primitive",
