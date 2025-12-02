@@ -113,7 +113,6 @@ public class DCATAPExporterTest {
 
     @Test
     public void testIsHarvestable() {
-        //assertEquals(false, exporter.isHarvestable());
         assertEquals(true, exporter.isHarvestable());
     }
 
@@ -124,8 +123,16 @@ public class DCATAPExporterTest {
 
     @Test
     public void testGetMediaType() {
-       // assertEquals("application/json", exporter.getMediaType());
-        assertEquals("application/xml", exporter.getMediaType());
+        String outputLang = exporter.getOutputLang();
+        if (outputLang.isEmpty() || outputLang.equals("RDF/XML")) {
+            assertEquals("application/xml", exporter.getMediaType());
+        } else if (outputLang.equals("JSON_LD")) {
+            assertEquals("application/json", exporter.getMediaType());
+        } else if (outputLang.equals("TURTLE")) {
+            assertEquals("text/plain", exporter.getMediaType());
+        } else {
+            fail("Unexpected output language: " + outputLang);
+        }
     }
 
     @Test
@@ -143,12 +150,34 @@ public class DCATAPExporterTest {
         writeFile(actual, "cars");
 //        JSONAssert.assertEquals(expected, actual, true);
 //        assertEquals(prettyPrint(expected), prettyPrint(outputStream.toString()));
+        outputStream.close();
+        
+        // also produce output in other formats for manual inspection
+        exporter.setOutputLang("JSON-LD");
+        outputStream = new ByteArrayOutputStream();
+        exporter.exportDataset(dataProvider, outputStream);
+        actual = outputStream.toString();
+        writeFile(actual, "cars");
+        outputStream.close();
+        
+        exporter.setOutputLang("TURTLE");
+        outputStream = new ByteArrayOutputStream();
+        exporter.exportDataset(dataProvider, outputStream);
+        actual = outputStream.toString();
+        writeFile(actual, "cars");
+        outputStream.close();
     }
 
     private void writeFile(String actual, String name) throws IOException {
         Path dir = Files.createDirectories(Paths.get("src/test/resources/" + name + "/out"));
         // Note that we have XML as a default for the DCAT-AP exporter, but at some point JSON_LD may be added
-        Path out = Paths.get(dir + "/dcatap.xml");
+        String extension = "xml";
+        if (exporter.getOutputLang().equals("JSON-LD")) {
+            extension = "json";
+        } else if (exporter.getOutputLang().equals("TURTLE")) {
+            extension = "ttl";
+        }
+        Path out = Paths.get(dir + "/" + name + "." + extension);
         Files.writeString(out, prettyPrint(actual), StandardCharsets.UTF_8);
     }
 
@@ -156,7 +185,7 @@ public class DCATAPExporterTest {
         try {
             return prettyPrint(getJsonObject(jsonObject));
         } catch (Exception ex) {
-            return jsonObject;
+            return jsonObject; // if we cannot parse, return as is
         }
     }
 

@@ -1,0 +1,205 @@
+{
+    "@graph": [
+        {
+            "@id": "_:ac8f46c5-6425-47a5-a484-fc5f2a6a821c",
+            "spdx:checksumValue": "d84985e94dde671f318076bd7a137f15",
+            "spdx:algorithm": "checksumAlgorithm_md5"
+        },
+        {
+            "@id": "http://localhost:8080/api/access/datafile/4",
+            "dcat:accessURL": "https://doi.org/10.5072/FK2/6ZUDGC",
+            "dct:license": {
+                "@id": "http://creativecommons.org/publicdomain/zero/1.0"
+            },
+            "spdx:checksum": {
+                "@id": "_:ac8f46c5-6425-47a5-a484-fc5f2a6a821c"
+            },
+            "dcat:mediaType": "http://www.iana.org/assignments/media-types/text/x-python",
+            "dcat:byteSize": {
+                "@value": "15",
+                "@type": "http://www.w3.org/2001/XMLSchema#int"
+            },
+            "dct:rights": {
+                "@id": "http://publications.europa.eu/resource/authority/access-right/PUBLIC"
+            },
+            "dct:title": "compute.py",
+            "rdfs:type": {
+                "@id": "dcat:Distribution"
+            }
+        },
+        {
+            "@id": "_:60ae11b9-2bb3-47a6-8adb-d0be79675bcf",
+            "spdx:checksumValue": "a2e484d07ee5590cc32182dc2c6ccc83",
+            "spdx:algorithm": "checksumAlgorithm_md5"
+        },
+        {
+            "@id": "_:12b0d7ab-241f-4ca6-ae78-bd27e2c91798",
+            "vcard:organization-name": {
+                "@language": "en",
+                "@value": "Harvard"
+            },
+            "vcard:hasEmail": "mailto:dataverse@mailinator.com",
+            "vcard:fn": {
+                "@language": "en",
+                "@value": "Durbin, Philip"
+            }
+        },
+        {
+            "@id": "http://localhost:8080/api/access/datafile/6",
+            "dcat:accessURL": "https://doi.org/10.5072/FK2/6ZUDGC",
+            "dct:license": {
+                "@id": "http://creativecommons.org/publicdomain/zero/1.0"
+            },
+            "spdx:checksum": {
+                "@id": "_:175698e1-a3da-4389-b9f9-d283dade1d05"
+            },
+            "dcat:mediaType": "http://www.iana.org/assignments/media-types/text/tab-separated-values",
+            "dcat:byteSize": {
+                "@value": "4026",
+                "@type": "http://www.w3.org/2001/XMLSchema#int"
+            },
+            "dct:rights": {
+                "@id": "http://publications.europa.eu/resource/authority/access-right/PUBLIC"
+            },
+            "dct:title": "stata13-auto.tab",
+            "rdfs:type": {
+                "@id": "dcat:Distribution"
+            }
+        },
+        {
+            "@id": "_:175698e1-a3da-4389-b9f9-d283dade1d05",
+            "spdx:checksumValue": "7b1201ce6b469796837a835377338c5a",
+            "spdx:algorithm": "checksumAlgorithm_md5"
+        },
+        {
+            "@id": "_:ac28ad8a-693d-4920-bdd6-08c784866f37",
+            "vcard:organization-name": {
+                "@language": "en",
+                "@value": "DANS"
+            },
+            "foaf:name": {
+                "@language": "en",
+                "@value": "Boon, Paul"
+            },
+            "rdfs:type": {
+                "@id": "foaf:Person"
+            }
+        },
+        {
+            "@id": "_:8221170e-a42d-4d5e-a2eb-547dcd3bb361",
+            "vcard:organization-name": {
+                "@language": "en",
+                "@value": "Harvard"
+            },
+            "foaf:name": {
+                "@language": "en",
+                "@value": "Durbin, Philip"
+            },
+            "rdfs:type": {
+                "@id": "foaf:Person"
+            }
+        },
+        {
+            "@id": "https://doi.org/10.5072/FK2/6ZUDGC",
+            "dcat:keyword": [
+                {
+                    "@language": "en",
+                    "@value": "Vehicles"
+                },
+                {
+                    "@language": "en",
+                    "@value": "Transportation"
+                },
+                {
+                    "@language": "en",
+                    "@value": "Automobiles"
+                }
+            ],
+            "dcat:distribution": [
+                {
+                    "@id": "http://localhost:8080/api/access/datafile/4"
+                },
+                {
+                    "@id": "http://localhost:8080/api/access/datafile/6"
+                },
+                {
+                    "@id": "http://localhost:8080/api/access/datafile/5"
+                }
+            ],
+            "dct:language": [
+                {
+                    "@language": "en",
+                    "@value": "Danish"
+                },
+                {
+                    "@language": "en",
+                    "@value": "Dutch"
+                },
+                {
+                    "@language": "en",
+                    "@value": "English"
+                }
+            ],
+            "dct:identifier": "https://doi.org/10.5072/FK2/6ZUDGC",
+            "dcat:version": "V1.0",
+            "dct:issued": "2024-03-20",
+            "dct:modified": "2024-03-20",
+            "dct:description": {
+                "@language": "en",
+                "@value": "This dataset is about cars."
+            },
+            "dct:creator": [
+                {
+                    "@id": "_:8221170e-a42d-4d5e-a2eb-547dcd3bb361"
+                },
+                {
+                    "@id": "_:ac28ad8a-693d-4920-bdd6-08c784866f37"
+                }
+            ],
+            "rdfs:type": {
+                "@id": "dcat:Dataset"
+            },
+            "dct:title": {
+                "@language": "en",
+                "@value": "Cars"
+            },
+            "dcat:landingPage": {
+                "@id": "https://doi.org/10.5072/FK2/6ZUDGC"
+            },
+            "dcat:contactPoint": {
+                "@id": "_:12b0d7ab-241f-4ca6-ae78-bd27e2c91798"
+            }
+        },
+        {
+            "@id": "http://localhost:8080/api/access/datafile/5",
+            "dcat:accessURL": "https://doi.org/10.5072/FK2/6ZUDGC",
+            "dct:license": {
+                "@id": "http://creativecommons.org/publicdomain/zero/1.0"
+            },
+            "spdx:checksum": {
+                "@id": "_:60ae11b9-2bb3-47a6-8adb-d0be79675bcf"
+            },
+            "dcat:mediaType": "http://www.iana.org/assignments/media-types/text/markdown",
+            "dcat:byteSize": {
+                "@value": "28",
+                "@type": "http://www.w3.org/2001/XMLSchema#int"
+            },
+            "dct:rights": {
+                "@id": "http://publications.europa.eu/resource/authority/access-right/PUBLIC"
+            },
+            "dct:title": "README.md",
+            "rdfs:type": {
+                "@id": "dcat:Distribution"
+            }
+        }
+    ],
+    "@context": {
+        "dct": "http://purl.org/dc/terms/",
+        "dcatap": "http://data.europa.eu/r5r/",
+        "spdx": "http://spdx.org/rdf/terms#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "vcard": "http://www.w3.org/2006/vcard/ns#",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "foaf": "http://xmlns.com/foaf/0.1/"
+    }
+}

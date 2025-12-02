@@ -1,3 +1,4 @@
 target
-src/test/resources/cars/out
+# I see no harm in exposing the test output
+#src/test/resources/cars/out
 /.flattened-pom.xml

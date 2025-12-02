@@ -1,0 +1,89 @@
+<rdf:RDF
+    xmlns:dct="http://purl.org/dc/terms/"
+    xmlns:spdx="http://spdx.org/rdf/terms#"
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:dcatap="http://data.europa.eu/r5r/"
+    xmlns:vcard="http://www.w3.org/2006/vcard/ns#"
+    xmlns:dcat="http://www.w3.org/ns/dcat#"
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+    xmlns:foaf="http://xmlns.com/foaf/0.1/">
+  <rdf:Description rdf:about="https://doi.org/10.5072/FK2/6ZUDGC">
+    <dcat:keyword xml:lang="en">Vehicles</dcat:keyword>
+    <dcat:distribution>
+      <rdf:Description rdf:about="http://localhost:8080/api/access/datafile/4">
+        <dcat:accessURL>https://doi.org/10.5072/FK2/6ZUDGC</dcat:accessURL>
+        <dct:license rdf:resource="http://creativecommons.org/publicdomain/zero/1.0"/>
+        <spdx:checksum rdf:parseType="Resource">
+          <spdx:checksumValue>d84985e94dde671f318076bd7a137f15</spdx:checksumValue>
+          <spdx:algorithm>checksumAlgorithm_md5</spdx:algorithm>
+        </spdx:checksum>
+        <dcat:mediaType>http://www.iana.org/assignments/media-types/text/x-python</dcat:mediaType>
+        <dcat:byteSize rdf:datatype="http://www.w3.org/2001/XMLSchema#int"
+        >15</dcat:byteSize>
+        <dct:rights rdf:resource="http://publications.europa.eu/resource/authority/access-right/PUBLIC"/>
+        <dct:title>compute.py</dct:title>
+        <rdfs:type rdf:resource="http://www.w3.org/ns/dcat#Distribution"/>
+      </rdf:Description>
+    </dcat:distribution>
+    <dct:language xml:lang="en">Danish</dct:language>
+    <dct:identifier>https://doi.org/10.5072/FK2/6ZUDGC</dct:identifier>
+    <dcat:version>V1.0</dcat:version>
+    <dct:issued>2024-03-20</dct:issued>
+    <dct:modified>2024-03-20</dct:modified>
+    <dct:description xml:lang="en">This dataset is about cars.</dct:description>
+    <dct:creator rdf:parseType="Resource">
+      <vcard:organization-name xml:lang="en">Harvard</vcard:organization-name>
+      <foaf:name xml:lang="en">Durbin, Philip</foaf:name>
+      <rdfs:type rdf:resource="http://xmlns.com/foaf/0.1/Person"/>
+    </dct:creator>
+    <rdfs:type rdf:resource="http://www.w3.org/ns/dcat#Dataset"/>
+    <dcat:distribution>
+      <rdf:Description rdf:about="http://localhost:8080/api/access/datafile/6">
+        <dcat:accessURL>https://doi.org/10.5072/FK2/6ZUDGC</dcat:accessURL>
+        <dct:license rdf:resource="http://creativecommons.org/publicdomain/zero/1.0"/>
+        <spdx:checksum rdf:parseType="Resource">
+          <spdx:checksumValue>7b1201ce6b469796837a835377338c5a</spdx:checksumValue>
+          <spdx:algorithm>checksumAlgorithm_md5</spdx:algorithm>
+        </spdx:checksum>
+        <dcat:mediaType>http://www.iana.org/assignments/media-types/text/tab-separated-values</dcat:mediaType>
+        <dcat:byteSize rdf:datatype="http://www.w3.org/2001/XMLSchema#int"
+        >4026</dcat:byteSize>
+        <dct:rights rdf:resource="http://publications.europa.eu/resource/authority/access-right/PUBLIC"/>
+        <dct:title>stata13-auto.tab</dct:title>
+        <rdfs:type rdf:resource="http://www.w3.org/ns/dcat#Distribution"/>
+      </rdf:Description>
+    </dcat:distribution>
+    <dcat:keyword xml:lang="en">Transportation</dcat:keyword>
+    <dct:creator rdf:parseType="Resource">
+      <vcard:organization-name xml:lang="en">DANS</vcard:organization-name>
+      <foaf:name xml:lang="en">Boon, Paul</foaf:name>
+      <rdfs:type rdf:resource="http://xmlns.com/foaf/0.1/Person"/>
+    </dct:creator>
+    <dcat:distribution>
+      <rdf:Description rdf:about="http://localhost:8080/api/access/datafile/5">
+        <dcat:accessURL>https://doi.org/10.5072/FK2/6ZUDGC</dcat:accessURL>
+        <dct:license rdf:resource="http://creativecommons.org/publicdomain/zero/1.0"/>
+        <spdx:checksum rdf:parseType="Resource">
+          <spdx:checksumValue>a2e484d07ee5590cc32182dc2c6ccc83</spdx:checksumValue>
+          <spdx:algorithm>checksumAlgorithm_md5</spdx:algorithm>
+        </spdx:checksum>
+        <dcat:mediaType>http://www.iana.org/assignments/media-types/text/markdown</dcat:mediaType>
+        <dcat:byteSize rdf:datatype="http://www.w3.org/2001/XMLSchema#int"
+        >28</dcat:byteSize>
+        <dct:rights rdf:resource="http://publications.europa.eu/resource/authority/access-right/PUBLIC"/>
+        <dct:title>README.md</dct:title>
+        <rdfs:type rdf:resource="http://www.w3.org/ns/dcat#Distribution"/>
+      </rdf:Description>
+    </dcat:distribution>
+    <dct:title xml:lang="en">Cars</dct:title>
+    <dct:language xml:lang="en">Dutch</dct:language>
+    <dcat:contactPoint rdf:parseType="Resource">
+      <vcard:organization-name xml:lang="en">Harvard</vcard:organization-name>
+      <vcard:hasEmail>mailto:dataverse@mailinator.com</vcard:hasEmail>
+      <vcard:fn xml:lang="en">Durbin, Philip</vcard:fn>
+    </dcat:contactPoint>
+    <dcat:landingPage rdf:resource="https://doi.org/10.5072/FK2/6ZUDGC"/>
+    <dct:language xml:lang="en">English</dct:language>
+    <dcat:keyword xml:lang="en">Automobiles</dcat:keyword>
+  </rdf:Description>
+</rdf:RDF>
