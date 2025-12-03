@@ -36,9 +36,8 @@ import java.time.format.DateTimeFormatter;
  * Also we try te be compliant with other EU varieties of DCAT-AP where possible.  
  * Sometimes by adding bogus values line "Unknown", "None" or "not available".
  */
-@AutoService(XMLExporter.class)
+@AutoService(Exporter.class)
 public class DCATAPExporter implements XMLExporter {
-//@AutoService(Exporter.class)
 //public class DCATAPExporter implements Exporter { 
     static String DCAT = "http://www.w3.org/ns/dcat#";
     static String DCT = "http://purl.org/dc/terms/";
