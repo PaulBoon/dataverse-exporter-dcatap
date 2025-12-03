@@ -36,10 +36,10 @@ import java.time.format.DateTimeFormatter;
  * Also we try te be compliant with other EU varieties of DCAT-AP where possible.  
  * Sometimes by adding bogus values line "Unknown", "None" or "not available".
  */
-//@AutoService(XMLExporter.class)
-//public class DCATAPExporter implements XMLExporter {
-@AutoService(Exporter.class)
-public class DCATAPExporter implements Exporter { 
+@AutoService(XMLExporter.class)
+public class DCATAPExporter implements XMLExporter {
+//@AutoService(Exporter.class)
+//public class DCATAPExporter implements Exporter { 
     static String DCAT = "http://www.w3.org/ns/dcat#";
     static String DCT = "http://purl.org/dc/terms/";
     static String RDFS = "http://www.w3.org/2000/01/rdf-schema#";
@@ -92,17 +92,17 @@ public class DCATAPExporter implements Exporter {
         return true;
     }
 
-    //    @Override
+    @Override
     public String getXMLNameSpace() {
         return "";
     }
 
-    //    @Override
+    @Override
     public String getXMLSchemaLocation() {
         return "";
     }
 
-    //    @Override
+    @Override
     public String getXMLSchemaVersion() {
         return "";
     }
