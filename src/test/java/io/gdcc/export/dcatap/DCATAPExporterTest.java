@@ -1,4 +1,4 @@
-package io.gdcc.spi.export.dcatap;
+package io.gdcc.export.dcatap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -27,11 +27,8 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.skyscreamer.jsonassert.JSONAssert;
 import com.github.difflib.DiffUtils;
 import com.github.difflib.patch.Patch;
-import java.util.Arrays;
-import java.util.List;
 
 public class DCATAPExporterTest {
 
@@ -109,7 +106,7 @@ public class DCATAPExporterTest {
         DCATAPExporter instance = new DCATAPExporter();
         String expResult = "";
         String result = instance.getFormatName();
-        assertEquals("dcatap", result);
+        assertEquals("dcat_ap", result);
     }
 
     @Test

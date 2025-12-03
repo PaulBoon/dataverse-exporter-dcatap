@@ -1,4 +1,4 @@
-package io.gdcc.spi.export.dcatap;
+package io.gdcc.export.dcatap;
 
 import com.google.auto.service.AutoService;
 import io.gdcc.spi.export.ExportDataProvider;
@@ -36,10 +36,9 @@ import java.time.format.DateTimeFormatter;
  * Also we try te be compliant with other EU varieties of DCAT-AP where possible.  
  * Sometimes by adding bogus values line "Unknown", "None" or "not available".
  */
-//@AutoService(XMLExporter.class)
-//public class DCATAPExporter implements XMLExporter {
 @AutoService(Exporter.class)
-public class DCATAPExporter implements Exporter { 
+public class DCATAPExporter implements XMLExporter {
+//public class DCATAPExporter implements Exporter { 
     static String DCAT = "http://www.w3.org/ns/dcat#";
     static String DCT = "http://purl.org/dc/terms/";
     static String RDFS = "http://www.w3.org/2000/01/rdf-schema#";
@@ -67,7 +66,7 @@ public class DCATAPExporter implements Exporter {
      */
     @Override
     public String getFormatName() {
-        return "dcatap";
+        return "dcat_ap";
     }
 
     /**
@@ -92,17 +91,17 @@ public class DCATAPExporter implements Exporter {
         return true;
     }
 
-    //    @Override
+    @Override
     public String getXMLNameSpace() {
-        return "";
+        return "http://purl.org/dc/terms/ http://spdx.org/rdf/terms# http://www.w3.org/1999/02/22-rdf-syntax-ns# http://data.europa.eu/r5r/ http://www.w3.org/2006/vcard/ns# http://www.w3.org/ns/dcat# http://www.w3.org/2000/01/rdf-schema# http://xmlns.com/foaf/0.1/";
     }
 
-    //    @Override
+    @Override
     public String getXMLSchemaLocation() {
         return "";
     }
 
-    //    @Override
+    @Override
     public String getXMLSchemaVersion() {
         return "";
     }
