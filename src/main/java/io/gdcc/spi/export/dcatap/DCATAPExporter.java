@@ -66,7 +66,7 @@ public class DCATAPExporter implements XMLExporter {
      */
     @Override
     public String getFormatName() {
-        return "dcatap";
+        return "dcat_ap";
     }
 
     /**

@@ -109,7 +109,7 @@ public class DCATAPExporterTest {
         DCATAPExporter instance = new DCATAPExporter();
         String expResult = "";
         String result = instance.getFormatName();
-        assertEquals("dcatap", result);
+        assertEquals("dcat_ap", result);
     }
 
     @Test
