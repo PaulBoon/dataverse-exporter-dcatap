@@ -1,4 +1,4 @@
-package io.gdcc.spi.export.dcatap;
+package io.gdcc.export.dcatap;
 
 import com.google.auto.service.AutoService;
 import io.gdcc.spi.export.ExportDataProvider;
@@ -93,7 +93,7 @@ public class DCATAPExporter implements XMLExporter {
 
     @Override
     public String getXMLNameSpace() {
-        return "";
+        return "http://purl.org/dc/terms/ http://spdx.org/rdf/terms# http://www.w3.org/1999/02/22-rdf-syntax-ns# http://data.europa.eu/r5r/ http://www.w3.org/2006/vcard/ns# http://www.w3.org/ns/dcat# http://www.w3.org/2000/01/rdf-schema# http://xmlns.com/foaf/0.1/";
     }
 
     @Override
