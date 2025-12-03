@@ -21,11 +21,17 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
+import com.github.difflib.DiffUtils;
+import com.github.difflib.patch.Patch;
+import java.util.Arrays;
+import java.util.List;
 
 public class DCATAPExporterTest {
 
@@ -166,8 +172,39 @@ public class DCATAPExporterTest {
         actual = outputStream.toString();
         writeFile(actual, "cars");
         outputStream.close();
-    }
+        
+        // Cmpare this output to expected Turtle output 
+        // Turtle is the most stable, because it does not regenerate random identifiers, 
+        // however the order of elements can change, making automated comparison difficult
+        // just warn if there is a difference and show it:
+        String expectedTurtle =
+                Files.readString(
+                        Paths.get("src/test/resources/cars/expected/cars.ttl"),
+                        StandardCharsets.UTF_8);
+        String expected = prettyPrint(expectedTurtle);
+        actual = prettyPrint(outputStream.toString());
 
+        // We could test for equality directly, but that would be brittle due to possible ordering differences
+        // even JSONAssert or XmlAssert will on random identifiers
+        // Instead, use a diff library to show differences
+        
+        List<String> expectedLines = Arrays.asList(expected.split("\\R"));
+        List<String> actualLines = Arrays.asList(actual.split("\\R"));
+
+        Patch<String> patch = DiffUtils.diff(expectedLines, actualLines);
+        // print warning if there are differences
+        if (!patch.getDeltas().isEmpty()) {
+            System.out.println("WARNING: Differences found in Turtle output:");
+            patch.getDeltas().forEach(delta -> {
+                System.out.println("Difference:");
+                System.out.println("Expected:");
+                delta.getSource().getLines().forEach(System.out::println);
+                System.out.println("Actual:");
+                delta.getTarget().getLines().forEach(System.out::println);
+            });
+        }
+    }
+    
     private void writeFile(String actual, String name) throws IOException {
         Path dir = Files.createDirectories(Paths.get("src/test/resources/" + name + "/out"));
         // Note that we have XML as a default for the DCAT-AP exporter, but at some point JSON_LD may be added
