@@ -33,12 +33,12 @@ PREFIX vcard:  <http://www.w3.org/2006/vcard/ns#>
 <https://doi.org/10.5072/FK2/6ZUDGC>
         rdfs:type          dcat:Dataset;
         dct:creator        [ rdfs:type                foaf:Person;
-                             vcard:organization-name  "Harvard"@en;
-                             foaf:name                "Durbin, Philip"@en
-                           ];
-        dct:creator        [ rdfs:type                foaf:Person;
                              vcard:organization-name  "DANS"@en;
                              foaf:name                "Boon, Paul"@en
+                           ];
+        dct:creator        [ rdfs:type                foaf:Person;
+                             vcard:organization-name  "Harvard"@en;
+                             foaf:name                "Durbin, Philip"@en
                            ];
         dct:description    "This dataset is about cars."@en;
         dct:identifier     "https://doi.org/10.5072/FK2/6ZUDGC";
