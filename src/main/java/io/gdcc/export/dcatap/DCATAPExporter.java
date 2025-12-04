@@ -12,19 +12,12 @@ import jakarta.ws.rs.core.MediaType;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Locale;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.impl.RDFWriterFImpl;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.riot.RDFFormatVariant;
-import org.apache.jena.riot.RDFLanguages;
-import org.apache.jena.riot.RDFWriter;
-import org.apache.jena.riot.writer.RDFJSONWriter;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 // Maybe use vocabs, but for now just use strings which I like more
 //import org.apache.jena.vocabulary.RDFS;
 
@@ -199,7 +192,7 @@ public class DCATAPExporter implements XMLExporter {
         model.setNsPrefix("vcard", VCARD);
         model.setNsPrefix("foaf", FOAF);
         model.setNsPrefix("spdx", SPDX);
-        model.setNsPrefix("rdf", RDF);
+        // model.setNsPrefix("rdf", RDF); // we do not need to define rdf prefix ourselves
         
         String identifier = datasetJson.getString("identifier", "");
         // note that with protocol and authority we can build a persistent URL as well
@@ -278,7 +271,8 @@ public class DCATAPExporter implements XMLExporter {
         //--- 
         // DCAT-AP Dataset Property: release date
         String pubDate = datasetVersion.getString("publicationDate", "no-publication-date");
-        datasetModel.addProperty(model.createProperty(DCT, "issued"), pubDate);
+        // check if we can parse the date properly?
+        datasetModel.addProperty(model.createProperty(DCT, "issued"), model.createTypedLiteral(pubDate, XSDDatatype.XSDdate));
         
         //---
         // DCAT-AP Dataset Property: modification date
@@ -292,7 +286,7 @@ public class DCATAPExporter implements XMLExporter {
         } catch (Exception e) {
             System.out.println("Failed to parse lastUpdateTime: " + lastUpdateTime);
         }
-        datasetModel.addProperty(model.createProperty(DCT, "modified"), formattedLastUpdateTime);
+        datasetModel.addProperty(model.createProperty(DCT, "modified"), model.createTypedLiteral(formattedLastUpdateTime, XSDDatatype.XSDdate));
         
         //---
         // DCAT-AP Dataset Property: provenance
